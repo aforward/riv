@@ -43,7 +43,7 @@ defmodule PlanPilotWeb do
         layouts: [html: PlanPilotWeb.Layouts]
 
       import Plug.Conn
-      import PlanPilotWeb.Gettext
+      use Gettext, backend: PlanPilotWeb.Gettext
 
       unquote(verified_routes())
     end
@@ -85,7 +85,7 @@ defmodule PlanPilotWeb do
       import Phoenix.HTML
       # Core UI components and translation
       import PlanPilotWeb.CoreComponents
-      import PlanPilotWeb.Gettext
+      use Gettext, backend: PlanPilotWeb.Gettext
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS

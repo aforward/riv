@@ -17,7 +17,7 @@ defmodule PlanPilotWeb.CoreComponents do
   use Phoenix.Component
 
   alias Phoenix.LiveView.JS
-  import PlanPilotWeb.Gettext
+  use Gettext, backend: PlanPilotWeb.Gettext
 
   @doc """
   Renders a modal.
