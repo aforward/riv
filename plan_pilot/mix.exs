@@ -33,6 +33,7 @@ defmodule PlanPilot.MixProject do
   defp deps do
     [
       {:kore, path: "../libs/kore"},
+      {:tmpl, path: "../libs/tmpl"},
       {:phoenix, "~> 1.7.14"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.10"},
