@@ -1,3 +1,17 @@
 # Retirement In View Database
 
-Nothing (yet) to see here.
+Little (yet) to see here.
+
+## Libs
+
+### tmpl
+
+Formatting templates for re-use, add to your project with
+
+```elixir
+def deps do
+  [
+    {:tmpl, path: "../libs/tmpl"},
+  ]
+end
+```
