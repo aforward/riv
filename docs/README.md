@@ -1,7 +1,5 @@
 # Retirement In View Database
 
-Little (yet) to see here.
-
 ## Libs
 
 ### tmpl
