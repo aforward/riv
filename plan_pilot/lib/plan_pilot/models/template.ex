@@ -9,6 +9,7 @@ defmodule PlanPilot.Models.Template do
 
   schema "templates" do
     field :identifier, :string
+    field :record_state, :string
     field :name, :string
     field :slug, :string
     field :text, :string
@@ -21,12 +22,14 @@ defmodule PlanPilot.Models.Template do
     record
     |> cast(params, [
       :identifier,
+      :record_state,
       :name,
       :slug,
       :text,
       :placeholders
     ])
     |> Changesetter.token(:identifier, length: 20)
+    |> Changesetter.defaulted(:record_state, "active")
     |> Changesetter.slug(:slug, field: :name, override: false)
     |> then(fn changeset ->
       case {Map.has_key?(changeset.changes, :placeholders),
@@ -48,7 +51,17 @@ defmodule PlanPilot.Models.Template do
   def all() do
     from(
       t in Template,
+      where: t.record_state != "deleted",
       order_by: [asc: t.name]
+    )
+    |> Repo.all()
+  end
+
+  def deleted() do
+    from(
+      t in Template,
+      where: t.record_state == "deleted",
+      order_by: [desc: t.updated_at]
     )
     |> Repo.all()
   end
@@ -80,5 +93,35 @@ defmodule PlanPilot.Models.Template do
     details
     |> changeset(data)
     |> Repo.update()
+  end
+
+  def mark_deleted(id), do: mark_as(id, "deleted")
+  def mark_active(id), do: mark_as(id, "active")
+
+  def mark_as(id, state) do
+    case find(id) do
+      nil -> :ok
+      found -> update(found, %{record_state: state})
+    end
+
+    :ok
+  end
+
+  def fully_destroy(id) do
+    case find(id) do
+      nil ->
+        {:error, :missing}
+
+      found ->
+        case found.record_state do
+          "deleted" ->
+            Repo.delete(found)
+            {:ok, found}
+
+          current_state ->
+            {:error,
+             "Must 'Template.mark_deleted' (deleted), current record_state is '#{current_state}'"}
+        end
+    end
   end
 end

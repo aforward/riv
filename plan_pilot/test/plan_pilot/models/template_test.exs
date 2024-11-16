@@ -140,6 +140,14 @@ defmodule PlanPilot.Models.TemplateTest do
       Template.add(%{name: "m"})
       assert Template.all() |> Enum.map(& &1.name) == ["a", "m", "z"]
     end
+
+    test "ignore deleted" do
+      Template.add(%{identifier: "abc123", record_state: "pending"})
+      Template.add(%{identifier: "def456", record_state: "deleted"})
+      Template.add(%{identifier: "hij789", record_state: "pending"})
+
+      assert Template.all() |> Enum.map(& &1.identifier) == ["abc123", "hij789"]
+    end
   end
 
   describe "find/x" do
@@ -154,6 +162,63 @@ defmodule PlanPilot.Models.TemplateTest do
 
       assert Template.find(e1.identifier).id == e1.id
       assert Template.find(e2.identifier).id == e2.id
+    end
+  end
+
+  describe "deleted/1" do
+    test "only deleted" do
+      Template.add(%{identifier: "abc123", record_state: "pending"})
+      Template.add(%{identifier: "def456", record_state: "deleted"})
+      Template.add(%{identifier: "hij789", record_state: "pending"})
+
+      assert Template.deleted() |> Enum.map(& &1.identifier) == ["def456"]
+    end
+  end
+
+  describe "mark_deleted/1" do
+    test "set the record_state to deleted" do
+      Template.add(%{identifier: "abc123"})
+      Template.mark_deleted("abc123")
+
+      t = Template.find("abc123")
+      assert t.record_state == "deleted"
+    end
+  end
+
+  describe "mark_active/1" do
+    test "set the record_state to deleted" do
+      Template.add(%{identifier: "abc123", record_state: "pending"})
+      Template.mark_active("abc123")
+
+      t = Template.find("abc123")
+      assert t.record_state == "active"
+    end
+  end
+
+  describe "mark_as/1" do
+    test "set the record_state to deleted" do
+      Template.add(%{identifier: "abc123", record_state: "pending"})
+      Template.mark_as("abc123", "stuff")
+
+      t = Template.find("abc123")
+      assert t.record_state == "stuff"
+    end
+  end
+
+  describe "fully_destroy/1" do
+    test "ignore unless deleted" do
+      Template.add(%{identifier: "x1", record_state: "pending"})
+
+      assert {:error, "Must 'Template.mark_deleted' (deleted), current record_state is 'pending'"} ==
+               Template.fully_destroy("x1")
+    end
+
+    test "only destroy if deleted" do
+      Template.add(%{identifier: "x2"})
+      Template.mark_deleted("x2")
+      {ok, _record} = Template.fully_destroy("x2")
+      assert ok == :ok
+      assert nil == Template.find("x2")
     end
   end
 end
