@@ -5,20 +5,39 @@ defmodule PlanPilotWeb.TemplateLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    form =
-      %Template{}
-      |> Template.changeset(%{})
-      |> to_form()
-
     socket
-    |> assign(:form_new, form)
+    |> assign(:form, editable_form(nil))
     |> assign(:all, Template.all())
     |> reply(:ok)
   end
 
   @impl true
-  def handle_event("create", %{"template" => params}, socket) do
-    Template.add(params)
+  def handle_event("save", %{"template" => params}, socket) do
+    Template.upsert(params)
+
+    socket
+    |> assign(:all, Template.all())
+    |> reply(:noreply)
+  end
+
+  @impl true
+  def handle_event("edit", %{"id" => id}, socket) do
+    socket
+    |> assign(:all, Template.all())
+    |> assign(:form, editable_form(id))
+    |> reply(:noreply)
+  end
+
+  @impl true
+  def handle_event("cancel", _params, socket) do
+    socket
+    |> assign(:form, editable_form(nil))
+    |> reply(:noreply)
+  end
+
+  @impl true
+  def handle_event("delete", %{"id" => id}, socket) do
+    Template.mark_deleted(id)
 
     socket
     |> assign(:all, Template.all())
@@ -39,7 +58,14 @@ defmodule PlanPilotWeb.TemplateLive do
               Manage placeholders with <code>{curly}</code> - <code>{brackets}</code>.
             </p>
 
-            <.form for={@form_new} phx-submit="create">
+            <.form for={@form} phx-submit="save">
+              <% identifier = Map.get(@form.data, :identifier) %>
+              <input
+                type="hidden"
+                id="template_identifier"
+                name="template[identifier]"
+                value={identifier}
+              />
               <div class="col-span-full">
                 <label for="about" class="sr-only">Template</label>
                 <div class="mt-2">
@@ -48,16 +74,21 @@ defmodule PlanPilotWeb.TemplateLive do
                     name="template[text]"
                     rows="3"
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-                  ></textarea>
+                  ><%= Map.get(@form.data, :text)%></textarea>
                 </div>
               </div>
-              <div class="mt-3">
+              <div class="mt-3 flex gap-x-3">
                 <button
                   type="submit"
                   class="rounded px-10 py-1 font-semibold text-slate-200 border border-slate-800 bg-slate-800 shadow-sm hover:bg-slate-600 hover:text-slate-200"
                 >
-                  Add template
+                  <%= if identifier, do: "Update template", else: "Add template" %>
                 </button>
+                <%= if identifier do %>
+                  <button type="button" phx-click="cancel" class="text-slate-500 hover:underline">
+                    cancel
+                  </button>
+                <% end %>
               </div>
             </.form>
           </div>
@@ -79,6 +110,16 @@ defmodule PlanPilotWeb.TemplateLive do
   def template(assigns) do
     ~H"""
     <div class="border p-4">
+      <div class="relative w-full bg-red-100">
+        <div class="absolute right-0 flex gap-x-2">
+          <button phx-click="edit" phx-value-id={@t.identifier}>
+            <.icon name="hero-pencil-square" class="w-6 h-6 bg-slate-500" />
+          </button>
+          <button phx-click="delete" phx-value-id={@t.identifier}>
+            <.icon name="hero-trash" class="w-6 h-6 bg-red-500" />
+          </button>
+        </div>
+      </div>
       <dt class="text-base/7 font-semibold text-gray-900"><%= @t.name %></dt>
       <dd class="text-base/7 text-gray-600">
         <%= @t.text %>
@@ -98,6 +139,12 @@ defmodule PlanPilotWeb.TemplateLive do
       <%= @name %>
     </span>
     """
+  end
+
+  defp editable_form(id) do
+    (Template.find(id) || %Template{})
+    |> Template.changeset(%{})
+    |> to_form()
   end
 
   defp reply(socket, ok), do: {ok, socket}
