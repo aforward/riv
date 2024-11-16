@@ -10,7 +10,8 @@ defmodule PlanPilot.Models.TemplateTest do
         name: "Mega Corp",
         slug: "mega-corp",
         text: "Hello {fname}, {lname}",
-        placeholders: ["fname", "lname"]
+        placeholders: ["fname", "lname"],
+        tags: ["a", "b", "c"]
       })
 
       p = Template.find("abc123")
@@ -20,6 +21,7 @@ defmodule PlanPilot.Models.TemplateTest do
       assert p.slug == "mega-corp"
       assert p.text == "Hello {fname}, {lname}"
       assert p.placeholders == ["fname", "lname"]
+      assert p.tags == ["a", "b", "c"]
     end
 
     test "update if existing" do
@@ -29,7 +31,8 @@ defmodule PlanPilot.Models.TemplateTest do
           name: "Mega Corp",
           slug: "mega-corp",
           text: "Hello {fname}, {lname}",
-          placeholders: ["fname", "lname"]
+          placeholders: ["fname", "lname"],
+          tags: ["a", "b", "c"]
         })
 
       Template.upsert(%{
@@ -37,7 +40,8 @@ defmodule PlanPilot.Models.TemplateTest do
         name: "Giga Corp",
         slug: "giga-corp",
         text: "Goodbye {fullname}",
-        placeholders: ["fullname"]
+        placeholders: ["fullname"],
+        tags: ["a", "c", "d"]
       })
 
       p = Template.find("abc123")
@@ -47,6 +51,7 @@ defmodule PlanPilot.Models.TemplateTest do
       assert p.slug == "giga-corp"
       assert p.text == "Goodbye {fullname}"
       assert p.placeholders == ["fullname"]
+      assert p.tags == ["a", "c", "d"]
 
       assert p.id == original.id
     end
@@ -59,7 +64,8 @@ defmodule PlanPilot.Models.TemplateTest do
         name: "Mega Corp",
         slug: "mega-corp",
         text: "Hello {fname}, {lname}",
-        placeholders: ["fname", "lname"]
+        placeholders: ["fname", "lname"],
+        tags: ["a", "c", "d"]
       })
 
       p = Template.find("abc123")
@@ -69,6 +75,7 @@ defmodule PlanPilot.Models.TemplateTest do
       assert p.slug == "mega-corp"
       assert p.text == "Hello {fname}, {lname}"
       assert p.placeholders == ["fname", "lname"]
+      assert p.tags == ["a", "c", "d"]
     end
 
     test "default values" do
@@ -80,6 +87,7 @@ defmodule PlanPilot.Models.TemplateTest do
       assert p.slug == nil
       assert p.text == nil
       assert p.placeholders == []
+      assert p.tags == []
     end
 
     test "set slug" do
@@ -91,6 +99,7 @@ defmodule PlanPilot.Models.TemplateTest do
       assert p.slug == "my-name"
       assert p.text == nil
       assert p.placeholders == []
+      assert p.tags == []
     end
 
     test "set placeholders" do
@@ -102,6 +111,7 @@ defmodule PlanPilot.Models.TemplateTest do
       assert p.slug == nil
       assert p.text == "My {fname} {lname}"
       assert p.placeholders == ["fname", "lname"]
+      assert p.tags == []
     end
   end
 
@@ -114,7 +124,8 @@ defmodule PlanPilot.Models.TemplateTest do
         name: "Mega Corp",
         slug: "mega-corp",
         text: "Hello {fname}, {lname}",
-        placeholders: ["fname", "lname"]
+        placeholders: ["fname", "lname"],
+        tags: ["a", "c", "d"]
       })
 
       p = Template.find("abc123")
@@ -126,6 +137,7 @@ defmodule PlanPilot.Models.TemplateTest do
       assert p.slug == "mega-corp"
       assert p.text == "Hello {fname}, {lname}"
       assert p.placeholders == ["fname", "lname"]
+      assert p.tags == ["a", "c", "d"]
     end
   end
 

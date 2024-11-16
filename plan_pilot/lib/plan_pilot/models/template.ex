@@ -14,6 +14,7 @@ defmodule PlanPilot.Models.Template do
     field :slug, :string
     field :text, :string
     field :placeholders, {:array, :string}, default: []
+    field :tags, {:array, :string}, default: []
 
     timestamps()
   end
@@ -26,7 +27,8 @@ defmodule PlanPilot.Models.Template do
       :name,
       :slug,
       :text,
-      :placeholders
+      :placeholders,
+      :tags
     ])
     |> Changesetter.token(:identifier, length: 20)
     |> Changesetter.defaulted(:record_state, "active")
