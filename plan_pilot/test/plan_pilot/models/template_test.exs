@@ -55,6 +55,28 @@ defmodule PlanPilot.Models.TemplateTest do
 
       assert p.id == original.id
     end
+
+    test "create with taglist" do
+      Template.upsert(%{
+        identifier: "abc123",
+        taglist: "   a,   b  ,   c  "
+      })
+
+      p = Template.find("abc123")
+      assert p.tags == ["a", "b", "c"]
+    end
+
+    test "update with taglist" do
+      Template.upsert(%{identifier: "abc123"})
+
+      Template.upsert(%{
+        identifier: "abc123",
+        taglist: "   a,   b  ,   c  "
+      })
+
+      p = Template.find("abc123")
+      assert p.tags == ["a", "b", "c"]
+    end
   end
 
   describe "add/1" do

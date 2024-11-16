@@ -14,6 +14,7 @@ defmodule PlanPilot.Models.Template do
     field :slug, :string
     field :text, :string
     field :placeholders, {:array, :string}, default: []
+    field :taglist, :string, virtual: true
     field :tags, {:array, :string}, default: []
 
     timestamps()
@@ -28,11 +29,29 @@ defmodule PlanPilot.Models.Template do
       :slug,
       :text,
       :placeholders,
-      :tags
+      :tags,
+      :taglist
     ])
     |> Changesetter.token(:identifier, length: 20)
     |> Changesetter.defaulted(:record_state, "active")
     |> Changesetter.slug(:slug, field: :name, override: false)
+    |> then(fn changeset ->
+      case {Map.has_key?(changeset.changes, :taglist), get_field(changeset, :taglist, nil)} do
+        {false, _} ->
+          changeset
+
+        {_, nil} ->
+          changeset
+
+        {_, list} ->
+          list
+          |> String.split(",")
+          |> Enum.map(&String.trim/1)
+          |> then(fn tags ->
+            put_change(changeset, :tags, tags)
+          end)
+      end
+    end)
     |> then(fn changeset ->
       case {Map.has_key?(changeset.changes, :placeholders),
             Map.has_key?(changeset.changes, :text), get_field(changeset, :text, nil)} do
