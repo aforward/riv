@@ -76,6 +76,20 @@ defmodule PlanPilotWeb.TemplateLive do
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
                   ><%= Map.get(@form.data, :text)%></textarea>
                 </div>
+                <div class="mt-2">
+                  <div class="rounded-md px-3 pb-1.5 pt-2.5 shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-indigo-600">
+                    <label for="template_tags" class="block text-xs font-medium text-gray-900">
+                      Tags <span class="ml-2 text-slate-400">comma, separated, please</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="template_taglist"
+                      name="template[taglist]"
+                      class="block w-full border-0 p-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm/6"
+                      value={(Map.get(@form.data, :tags) || []) |> Enum.join(", ")}
+                    />
+                  </div>
+                </div>
               </div>
               <div class="mt-3 flex gap-x-3">
                 <button
@@ -129,6 +143,11 @@ defmodule PlanPilotWeb.TemplateLive do
           <.placeholder name={name} />
         <% end %>
       </dd>
+      <dd class="mt-4">
+        <%= for name <- @t.tags || [] do %>
+          <.tag name={name} />
+        <% end %>
+      </dd>
     </div>
     """
   end
@@ -136,6 +155,14 @@ defmodule PlanPilotWeb.TemplateLive do
   def placeholder(assigns) do
     ~H"""
     <span class="inline-flex items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+      <%= @name %>
+    </span>
+    """
+  end
+
+  def tag(assigns) do
+    ~H"""
+    <span class="inline-flex items-center rounded-md bg-yellow-100 px-2 py-1 text-xs font-medium text-slate-700">
       <%= @name %>
     </span>
     """
