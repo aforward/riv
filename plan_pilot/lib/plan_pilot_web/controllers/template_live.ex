@@ -71,6 +71,16 @@ defmodule PlanPilotWeb.TemplateLive do
   end
 
   @impl true
+  def handle_event("refresh_tags", _params, socket) do
+    Tag.refresh_all()
+
+    socket
+    |> assign_tags()
+    |> filter_tags()
+    |> reply(:noreply)
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="bg-white">
@@ -149,7 +159,12 @@ defmodule PlanPilotWeb.TemplateLive do
               </div>
             </.form>
             <div class="mt-10">
-              <h3 class="font-bold text-slate-500">Tag Filters</h3>
+              <h3 class="font-bold text-slate-500">
+                Tag Filters
+                <button class="ml-2" phx-click="refresh_tags">
+                  <.icon name="hero-arrow-path" class="w-5 h-5 text-slate-500" />
+                </button>
+              </h3>
               <div class="mt-2">
                 <%= for t <- @tags do %>
                   <button phx-click="toggle_tag" phx-value-tag={t.name}>
