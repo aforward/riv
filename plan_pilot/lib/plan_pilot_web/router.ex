@@ -19,6 +19,7 @@ defmodule PlanPilotWeb.Router do
 
     get "/", PageController, :home
     live "/templates", TemplateLive
+    live "/goals", GoalLive
   end
 
   # Other scopes may use custom stacks.
