@@ -11,10 +11,9 @@ defmodule PlanPilotWeb.TemplateLive do
   def mount(_params, _session, socket) do
     socket
     |> assign(:form, editable_form(nil))
-    |> assign(:all, Template.all())
     |> assign(:tag_toggles, %{})
     |> assign_tags()
-    |> filter_tags()
+    |> assign_templates()
     |> reply(:ok)
   end
 
@@ -23,7 +22,7 @@ defmodule PlanPilotWeb.TemplateLive do
     Template.upsert(params)
 
     socket
-    |> assign(:all, Template.all())
+    |> assign_templates()
     |> reply(:noreply)
   end
 
@@ -50,7 +49,7 @@ defmodule PlanPilotWeb.TemplateLive do
   @impl true
   def handle_event("edit", %{"id" => id}, socket) do
     socket
-    |> assign(:all, Template.all())
+    |> assign_templates()
     |> assign(:form, editable_form(id))
     |> reply(:noreply)
   end
@@ -67,7 +66,7 @@ defmodule PlanPilotWeb.TemplateLive do
     Template.mark_deleted(id)
 
     socket
-    |> assign(:all, Template.all())
+    |> assign_templates()
     |> reply(:noreply)
   end
 
@@ -264,6 +263,12 @@ defmodule PlanPilotWeb.TemplateLive do
     (Template.find(id) || %Template{})
     |> Template.changeset(%{})
     |> to_form()
+  end
+
+  defp assign_templates(socket) do
+    socket
+    |> assign(:all, Template.all())
+    |> filter_tags()
   end
 
   defp assign_tags(socket) do
