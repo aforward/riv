@@ -3,7 +3,7 @@ defmodule PlanPilot.Models.Tag do
   import Ecto.Changeset
   import Ecto.Query, only: [from: 2]
 
-  alias PlanPilot.Models.Tag
+  alias PlanPilot.Models.{Tag, Template}
   alias PlanPilot.Repo
   alias Kore.Changesetter
 
@@ -49,6 +49,51 @@ defmodule PlanPilot.Models.Tag do
       order_by: [asc: t.name]
     )
     |> Repo.all()
+  end
+
+  def refresh_all() do
+    tags =
+      Template.all()
+      |> Enum.reject(fn t -> is_nil(t.tags) end)
+      |> Enum.flat_map(fn t ->
+        t.tags
+        |> Enum.map(fn name -> {name, t.slug} end)
+      end)
+      |> Enum.reduce(%{}, fn {name, slug}, acc ->
+        Map.update(acc, name, [slug], fn all -> [slug | all] end)
+      end)
+      |> Enum.map(fn {name, all} -> {name, Enum.sort(all)} end)
+      |> Enum.into(%{})
+
+    existing =
+      all()
+      |> Enum.filter(fn t ->
+        cond do
+          # obsolete so delete me
+          !Map.has_key?(tags, t.name) ->
+            Repo.delete(t)
+            false
+
+          # unchanged so do nothing
+          tags[t.name] == t.templates ->
+            false
+
+          # changed so update
+          :else ->
+            update(t, %{templates: tags[t.name]})
+            true
+        end
+      end)
+      |> Enum.map(fn t -> {t.name, t} end)
+      |> Enum.into(%{})
+
+    tags
+    |> Enum.reject(fn {name, _templates} ->
+      Map.has_key?(existing, name)
+    end)
+    |> Enum.map(fn {name, templates} ->
+      add(%{name: name, templates: templates})
+    end)
   end
 
   def find(nil), do: nil

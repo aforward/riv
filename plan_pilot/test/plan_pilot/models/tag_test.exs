@@ -1,6 +1,6 @@
 defmodule PlanPilot.Models.TagTest do
   use PlanPilot.DataCase, async: true
-  alias PlanPilot.Models.Tag
+  alias PlanPilot.Models.{Tag, Template}
   doctest PlanPilot.Models.Tag
 
   describe "upsert/1" do
@@ -124,6 +124,40 @@ defmodule PlanPilot.Models.TagTest do
 
       assert Tag.find(e1.name).id == e1.id
       assert Tag.find(e2.name).id == e2.id
+    end
+  end
+
+  describe "refresh_all" do
+    test "no templates" do
+      Tag.add(%{name: "a"})
+      Tag.refresh_all()
+      assert Tag.all() == []
+    end
+
+    test "all new tags from all templates" do
+      Template.add(%{name: "n1", tags: ["a", "b", "c"]})
+      Template.add(%{name: "n2", tags: ["a", "d"]})
+      Tag.refresh_all()
+      assert Tag.all() |> Enum.map(& &1.name) == ["a", "b", "c", "d"]
+
+      assert Tag.find("a").templates == ["n1", "n2"]
+      assert Tag.find("b").templates == ["n1"]
+      assert Tag.find("c").templates == ["n1"]
+      assert Tag.find("d").templates == ["n2"]
+    end
+
+    test "delete old tags" do
+      Tag.add(%{name: "a"})
+      Template.add(%{name: "n1", tags: ["b", "c"]})
+      Tag.refresh_all()
+      assert Tag.all() |> Enum.map(& &1.name) == ["b", "c"]
+    end
+
+    test "keep existing tags" do
+      Tag.add(%{name: "a"})
+      Template.add(%{name: "n1", tags: ["a", "c"]})
+      Tag.refresh_all()
+      assert Tag.all() |> Enum.map(& &1.name) == ["a", "c"]
     end
   end
 end
