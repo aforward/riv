@@ -1,13 +1,18 @@
 defmodule PlanPilotWeb.TemplateLive do
   use PlanPilotWeb, :live_view
 
-  alias PlanPilot.Models.Template
+  alias PlanPilot.Models.{Template, Tag}
+
+  @colour_codes [:red, :yellow, :green, :blue, :indigo, :purple, :pink]
+
+  @num_colours Enum.count(@colour_codes)
 
   @impl true
   def mount(_params, _session, socket) do
     socket
     |> assign(:form, editable_form(nil))
     |> assign(:all, Template.all())
+    |> assign_tags()
     |> reply(:ok)
   end
 
@@ -76,6 +81,23 @@ defmodule PlanPilotWeb.TemplateLive do
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
                   ><%= Map.get(@form.data, :text)%></textarea>
                 </div>
+
+                <div class="mt-2">
+                  <div class="rounded-md px-3 pb-1.5 pt-2.5 shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-indigo-600">
+                    <label for="template_tags" class="block text-xs font-medium text-gray-900">
+                      Name
+                      <span class="ml-2 text-slate-400">used to embed template into document</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="template_name"
+                      name="template[name]"
+                      class="block w-full border-0 p-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm/6"
+                      value={Map.get(@form.data, :name)}
+                    />
+                  </div>
+                </div>
+
                 <div class="mt-2">
                   <div class="rounded-md px-3 pb-1.5 pt-2.5 shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-indigo-600">
                     <label for="template_tags" class="block text-xs font-medium text-gray-900">
@@ -110,7 +132,7 @@ defmodule PlanPilotWeb.TemplateLive do
             <div class="mt-10 lg:col-span-7 lg:mt-0">
               <dl class="space-y-4">
                 <%= for t <- @all do %>
-                  <.template t={t} />
+                  <.template t={t} tag_colours={@tag_colours} />
                 <% end %>
               </dl>
             </div>
@@ -134,7 +156,9 @@ defmodule PlanPilotWeb.TemplateLive do
           </button>
         </div>
       </div>
-      <dt class="text-base/7 font-semibold text-gray-900"><%= @t.name %></dt>
+      <dt class="text-base/7 font-semibold text-gray-900">
+        <%= @t.name %> <span class="text-slate-500">(<%= @t.slug %>)</span>
+      </dt>
       <dd class="text-base/7 text-gray-600">
         <%= @t.text %>
       </dd>
@@ -145,7 +169,7 @@ defmodule PlanPilotWeb.TemplateLive do
       </dd>
       <dd class="mt-4">
         <%= for name <- @t.tags || [] do %>
-          <.tag name={name} />
+          <.tag name={name} colour={@tag_colours[name]} />
         <% end %>
       </dd>
     </div>
@@ -160,11 +184,47 @@ defmodule PlanPilotWeb.TemplateLive do
     """
   end
 
+  # Done this way so the tailwind colours get included
   def tag(assigns) do
     ~H"""
-    <span class="inline-flex items-center rounded-md bg-yellow-100 px-2 py-1 text-xs font-medium text-slate-700">
-      <%= @name %>
-    </span>
+    <%= case assigns[:colour] do %>
+      <% :gray -> %>
+        <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+          <%= @name %>
+        </span>
+      <% :red -> %>
+        <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">
+          <%= @name %>
+        </span>
+      <% :yellow -> %>
+        <span class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
+          <%= @name %>
+        </span>
+      <% :green -> %>
+        <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+          <%= @name %>
+        </span>
+      <% :blue -> %>
+        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+          <%= @name %>
+        </span>
+      <% :indigo -> %>
+        <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+          <%= @name %>
+        </span>
+      <% :purple -> %>
+        <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
+          <%= @name %>
+        </span>
+      <% :pink -> %>
+        <span class="inline-flex items-center rounded-md bg-pink-50 px-2 py-1 text-xs font-medium text-pink-700 ring-1 ring-inset ring-pink-700/10">
+          <%= @name %>
+        </span>
+      <% _else -> %>
+        <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+          <%= @name %>
+        </span>
+    <% end %>
     """
   end
 
@@ -172,6 +232,22 @@ defmodule PlanPilotWeb.TemplateLive do
     (Template.find(id) || %Template{})
     |> Template.changeset(%{})
     |> to_form()
+  end
+
+  defp assign_tags(socket) do
+    tags = Tag.all()
+
+    tag_colours =
+      tags
+      |> Enum.with_index()
+      |> Enum.map(fn {t, i} ->
+        {t.name, Enum.at(@colour_codes, rem(i, @num_colours))}
+      end)
+      |> Enum.into(%{})
+
+    socket
+    |> assign(:tags, tags)
+    |> assign(:tag_colours, tag_colours)
   end
 
   defp reply(socket, ok), do: {ok, socket}
