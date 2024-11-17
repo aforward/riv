@@ -12,7 +12,9 @@ defmodule PlanPilotWeb.TemplateLive do
     socket
     |> assign(:form, editable_form(nil))
     |> assign(:all, Template.all())
+    |> assign(:tag_toggles, %{})
     |> assign_tags()
+    |> filter_tags()
     |> reply(:ok)
   end
 
@@ -22,6 +24,26 @@ defmodule PlanPilotWeb.TemplateLive do
 
     socket
     |> assign(:all, Template.all())
+    |> reply(:noreply)
+  end
+
+  @impl true
+  def handle_event("toggle_tag", %{"tag" => name}, socket) do
+    colours = socket.assigns[:tag_colours]
+    toggles = socket.assigns[:tag_toggles]
+
+    updated =
+      case Map.get(toggles, name) do
+        nil ->
+          Map.put(toggles, name, colours[name])
+
+        _found ->
+          Map.delete(toggles, name)
+      end
+
+    socket
+    |> assign(:tag_toggles, updated)
+    |> filter_tags()
     |> reply(:noreply)
   end
 
@@ -127,11 +149,21 @@ defmodule PlanPilotWeb.TemplateLive do
                 <% end %>
               </div>
             </.form>
+            <div class="mt-10">
+              <h3 class="font-bold text-slate-500">Tag Filters</h3>
+              <div class="mt-2">
+                <%= for t <- @tags do %>
+                  <button phx-click="toggle_tag" phx-value-tag={t.name}>
+                    <.tag name={t.name} colour={Map.get(@tag_toggles, t.name, :grey)} />
+                  </button>
+                <% end %>
+              </div>
+            </div>
           </div>
-          <%= if !Enum.empty?(@all) do %>
+          <%= if !Enum.empty?(@filtered) do %>
             <div class="mt-10 lg:col-span-7 lg:mt-0">
               <dl class="space-y-4">
-                <%= for t <- @all do %>
+                <%= for t <- @filtered do %>
                   <.template t={t} tag_colours={@tag_colours} />
                 <% end %>
               </dl>
@@ -248,6 +280,23 @@ defmodule PlanPilotWeb.TemplateLive do
     socket
     |> assign(:tags, tags)
     |> assign(:tag_colours, tag_colours)
+  end
+
+  defp filter_tags(socket) do
+    toggles = socket.assigns[:tag_toggles]
+
+    filtered =
+      if Enum.empty?(toggles) do
+        socket.assigns[:all]
+      else
+        socket.assigns[:all]
+        |> Enum.filter(fn t ->
+          Enum.any?(t.tags, fn tag -> Map.has_key?(toggles, tag) end)
+        end)
+      end
+
+    socket
+    |> assign(:filtered, filtered)
   end
 
   defp reply(socket, ok), do: {ok, socket}
